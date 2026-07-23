@@ -147,6 +147,14 @@ export default function CreateContent({ onExitToDashboard, profile, projectName 
     // Remove old script tags
     html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
     
+    // Remove hardcoded /src/index.css as it breaks in production builds
+    html = html.replace(/<link[^>]*href="\/src\/index\.css"[^>]*>/gi, "")
+    
+    // Dynamically grab all styles from the parent React app (works for both Vite Dev and Prod)
+    const parentStyles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(el => el.outerHTML)
+      .join('\n')
+    
     // Inject strict 1080x1080 sizing to override any flex/padding from the template's body tag.
     // This ensures all templates render identically inside the iframe regardless of their body classes.
     const fontLinks = `
@@ -174,7 +182,7 @@ export default function CreateContent({ onExitToDashboard, profile, projectName 
         }
       </style>
     `
-    html = html.replace('</head>', `${fontLinks}\n${styleReset}</head>`)
+    html = html.replace('</head>', `${parentStyles}\n${fontLinks}\n${styleReset}</head>`)
     
     return html
   }, [template, formData])
